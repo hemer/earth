@@ -19,7 +19,7 @@
 #
 class UniqueServerName < ActiveRecord::Migration
   def self.up
-    add_index :servers, :name, :unique
+    add_index :servers, :name, :unique => true
   end
 
   def self.down

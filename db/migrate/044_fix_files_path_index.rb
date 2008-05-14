@@ -22,6 +22,6 @@ class FixFilesPathIndex < ActiveRecord::Migration
 
   def self.down
     remove_index :files, :path
-    add_index :files, :path, :unique
+    add_index :files, :path, :unique => true
   end
 end

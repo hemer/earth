@@ -18,7 +18,7 @@
 class UniqueCachedSizesDirectoryFilter < ActiveRecord::Migration
   def self.up
     remove_index :cached_sizes, [:directory_id, :filter_id]
-    add_index :cached_sizes, [:directory_id, :filter_id], :unique
+    add_index :cached_sizes, [:directory_id, :filter_id], :unique => true
   end
 
   def self.down

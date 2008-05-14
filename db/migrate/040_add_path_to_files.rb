@@ -25,7 +25,7 @@ class AddPathToFiles < ActiveRecord::Migration
     end
 
     change_column :files, :path, :string, :limit => 8192, :null => false, :unique => true
-    add_index :files, :path, :unique
+    add_index :files, :path, :unique => true
   end
 
   def self.down

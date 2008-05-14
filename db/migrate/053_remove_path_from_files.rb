@@ -22,6 +22,6 @@ class RemovePathFromFiles < ActiveRecord::Migration
   def self.down
     add_column :files, :path, :string, :limit => 8192, :null => true
     change_column :files, :path, :string, :limit => 8192, :null => false, :unique => true
-    add_index :files, :path, :unique
+    add_index :files, :path, :unique => true
   end
 end
