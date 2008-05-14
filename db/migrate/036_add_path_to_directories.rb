@@ -28,7 +28,7 @@ class AddPathToDirectories < ActiveRecord::Migration
     end
 
     change_column :directories, :path, :string, :limit => 8192, :null => false, :unique => true
-    add_index :directories, :path, :unique
+    add_index :directories, :path, :unique => true
   end
 
   def self.setup_children_recursive(dir)
