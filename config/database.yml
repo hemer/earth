@@ -1,3 +1,10 @@
+Host github.com
+ Hostname github.com
+ Port 22
+ IdentitiesOnly yes
+ IdentityFile ~/.ssh/id_rsa
+ TCPKeepAlive yes
+ User git 
 # PostgreSQL
 #
 # Install the native PostgreSQL driver:
@@ -18,8 +25,8 @@ development:
 test:
   adapter: postgresql
   database: earth_test
-  username: earth
-  password: earth
+  username: earth_user_test
+  password: earth_user_test
   host: localhost
   encoding: utf8
   allow_concurrency: true
