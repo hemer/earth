@@ -18,7 +18,7 @@ require 'csv'
 require 'pp'
 
 class BrowserController < ApplicationController
-  before_filter :load_context, :only => [:index,:flat,:show]
+  before_filter :load_context, :only => [:index,:flat,:show,:usages]
   
   def index
     redirect_to :action => 'show'
@@ -142,6 +142,15 @@ class BrowserController < ApplicationController
     end
   end
   
+  # Ken: User space Usages (Ticket 66)
+  def usages
+    if @server == nil then
+      @users_space_usages = Earth::UsersSpaceUsage.find(:all)
+    else
+      @users_space_usages = Earth::UsersSpaceUsage.find(:all, :conditions => [ " server_id = ? ", @server.id ])
+    end
+  end
+
   def auto_complete_for_filter_user
     if User.ldap_configured?
       @users = User.find_matching(params[:filter_user])

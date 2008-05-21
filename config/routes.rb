@@ -55,6 +55,15 @@ ActionController::Routing::Routes.draw do |map|
   map.connect '/browser/flat.:format/:server*path', :controller => "browser", :action => "flat",
     :requirements => {:server => hostname_regex}
 
+  # Ken: setup controller "browser", action "usages"
+  map.connect '/browser/usages', :controller => "browser", :action => "usages"
+  map.connect '/browser/usages/:server', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
+  map.connect '/browser/usages/:server*path', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
+  map.connect '/browser/usages.:format/:server*path', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
+  
   # setup controller "graph", action "show"
   map.connect '/graph/show', :controller => "graph", :action => "show"
   map.connect '/graph/show/:server', :controller => "graph", :action => "show",

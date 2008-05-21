@@ -123,10 +123,12 @@ class FileMonitor < EarthPlugin
   end
   
   # Remove all directories on this server from the database
+  # Ken: Included Earth::UsersSpaceUsage.delete_all
   def database_cleanup
     this_server = Earth::Server.this_server
     benchmark "Clearing old data for this server out of the database" do
       Earth::Directory.delete_all "server_id=#{this_server.id}"
+      Earth::UsersSpaceUsage.delete_all "id >= 0"
     end  
     this_server.last_update_finish_time = nil
     this_server.save!
@@ -284,7 +286,6 @@ private
       return 1
     end
 
-
     Earth::Directory::transaction do
 
       file_names, subdirectory_names, stats = [], [], Hash.new
@@ -313,6 +314,9 @@ private
           end
         end
       end
+      
+      # Ken : Added this for easy server ID access
+      server_id = directory.server_id
 
       if not options[:only_build_directories] then
         # By adding and removing files on the association, the cache of the association will be kept up to date
@@ -322,15 +326,34 @@ private
           added_file_names = file_names
         end
         added_file_names.each do |name|
+          # Ken: Begin getting usage space
+          user_usage = Earth::UsersSpaceUsage.find(:first, :conditions => [ " uid = ? AND server_id = ? ", stats[name].uid, server_id ])
+          # Ken: End getting usage space
+          
           Earth::File.benchmark("Creating file with name #{name}", Logger::DEBUG, !log_all_sql) do
             directory.files.create(:name => name, :stat => stats[name])
           end
+          
+          # Ken: Begin creating/updating usage space
+          if user_usage == nil then
+            logger.debug("update_non_recursive: creating new space_usage with size: #{stats[name].size} for uid: #{stats[name].uid}")
+            Earth::UsersSpaceUsage.create(:uid => stats[name].uid, :server_id => server_id, :space_usage => stats[name].size)
+          else
+            logger.debug("update_non_recursive: updating space_usage with size: #{stats[name].size} for uid: #{user_usage.uid}")
+            Earth::UsersSpaceUsage.update(user_usage.id, {:space_usage => user_usage.space_usage + stats[name].size})
+          end
+          # Ken: End creating/updating usage space
+          
         end
 
         if not options[:initial_pass]
           directory_files = directory.files.to_ary.clone
           
           directory_files.each do |file|
+            # Ken: Begin getting space usage
+            user_usage = Earth::UsersSpaceUsage.find(:first, :conditions => [ " uid = ? AND server_id = ? ", file.uid, server_id ])
+            # Ken: End getting space usage
+            
             # If the file still exists
             if file_names.include?(file.name)
               logger.debug("checking for update on file #{file.name}")
@@ -340,12 +363,35 @@ private
                 Earth::File.benchmark("Updating file with name #{file.name}", Logger::DEBUG, !log_all_sql) do
                   file.save
                 end
+                
+                # Ken: Begin creating/updating space usage
+                if user_usage == nil then
+                  logger.debug("update_non_recursive::not_initial_pass creating new space_usage with size: #{file.bytes} for uid: #{file.uid}")
+                  Earth::UsersSpaceUsage.create(:uid => stats[file.name].uid, :server_id => server_id, :space_usage => file.bytes)
+                else
+                  logger.debug("update_non_recursive::not_initial_pass updating new space_usage with size: #{file.size} for uid: #{user_usage.uid}")
+                  Earth::UsersSpaceUsage.update(user_usage.id, {:space_usage => user_usage.space_usage + file.bytes})
+                end
+                # Ken: End creating/updating space usage
+                
               end
               # If the file has been deleted
             else
               Earth::Directory.benchmark("Removing file with name #{file.name}", Logger::DEBUG, !log_all_sql) do
                 directory.files.delete(file)
               end
+              
+              # Ken: Begin updating space usage
+              new_space_usage = user_usage.space_usage - file.bytes
+              
+              if new_space_usage.to_i < 0 then
+                new_space_usage = 0
+              end
+              
+              logger.debug("update_non_recursive::not_initial_pass refresh new space_usage with size: #{new_space_usage} for uid: #{user_usage.uid}")
+              Earth::UsersSpaceUsage.update(user_usage.id, { :space_usage => new_space_usage })
+              # Ken: End updating space usage
+              
             end
           end
         end
