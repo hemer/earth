@@ -143,13 +143,30 @@ class BrowserController < ApplicationController
   end
   
   # Ken: User space Usages (Ticket 66)
-  def usages
+#  def usages
+#    if @server == nil then
+#      @users_space_usages = Earth::UsersSpaceUsage.find(:all)
+#    else
+#      @users_space_usages = Earth::UsersSpaceUsage.find(:all, :conditions => [ " server_id = ? ", @server.id ])
+#    end
+#  end
+
+ def usages
     if @server == nil then
-      @users_space_usages = Earth::UsersSpaceUsage.find(:all)
+      @users_space_usages = 
+        Earth::File.find(:all,
+                                    :select => "SUM(files.bytes) AS space_usage, uid, server_id",
+                                    :joins => "JOIN directories ON files.directory_id = directories.id",
+                         :group => "uid, server_id")
     else
-      @users_space_usages = Earth::UsersSpaceUsage.find(:all, :conditions => [ " server_id = ? ", @server.id ])
+      @users_space_usages = 
+        Earth::File.find(:all,
+                                    :select => "SUM(files.bytes) AS space_usage, uid, server_id",
+                                    :joins => "JOIN directories ON files.directory_id = directories.id",
+                         :group => "uid, server_id")
+
     end
-  end
+ end
 
   def auto_complete_for_filter_user
     if User.ldap_configured?

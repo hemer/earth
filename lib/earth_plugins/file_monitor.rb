@@ -345,6 +345,8 @@ private
           # Ken: End creating/updating usage space
           
         end
+          
+
 
         if not options[:initial_pass]
           directory_files = directory.files.to_ary.clone
@@ -364,17 +366,19 @@ private
                   file.save
                 end
                 
-                # Ken: Begin creating/updating space usage
-                if user_usage == nil then
-                  logger.debug("update_non_recursive::not_initial_pass creating new space_usage with size: #{file.bytes} for uid: #{file.uid}")
-                  Earth::UsersSpaceUsage.create(:uid => stats[file.name].uid, :server_id => server_id, :space_usage => file.bytes)
-                else
-                  logger.debug("update_non_recursive::not_initial_pass updating new space_usage with size: #{file.size} for uid: #{user_usage.uid}")
-                  Earth::UsersSpaceUsage.update(user_usage.id, {:space_usage => user_usage.space_usage + file.bytes})
-                end
-                # Ken: End creating/updating space usage
-                
+
               end
+         
+                # Ken: Begin creating/updating space usage
+              if user_usage == nil then
+                logger.debug("update_non_recursive::not_initial_pass creating new space_usage with size: #{file.bytes} for uid: #{file.uid}")
+                Earth::UsersSpaceUsage.create(:uid => stats[file.name].uid, :server_id => server_id, :space_usage => file.bytes)
+              else
+                logger.debug("update_non_recursive::not_initial_pass updating new space_usage with size: #{file.size} for uid: #{user_usage.uid}")
+                Earth::UsersSpaceUsage.update(user_usage.id, {:space_usage => user_usage.space_usage + file.bytes})
+              end
+                # Ken: End creating/updating space usage
+
               # If the file has been deleted
             else
               Earth::Directory.benchmark("Removing file with name #{file.name}", Logger::DEBUG, !log_all_sql) do
